@@ -198,4 +198,168 @@ drone.close()
 ```
 
 🚀 **Now, you can use Flow Deck-powered movements and logic for safe and accurate Crazyflie flights!**
+# 🚀 Crazyflie Multi-Ranger Deck Commands & Conditional Statements
+
+The **Multi-Ranger Deck** allows the Crazyflie drone to **detect obstacles** in five directions (`front`, `back`, `left`, `right`, `up`) using time-of-flight sensors. It enables **collision avoidance, autonomous navigation, and environmental awareness**.
+
+---
+
+## 📌 Required Import for Multi-Ranger Deck
+Before using Multi-Ranger Deck commands, ensure you import the `Multiranger` class:
+```python
+from cflib.swarms.multiranger import Multiranger
+```
+
+---
+
+## 📡 Multi-Ranger Sensor Readings
+You can read the **distance measurements** in meters from each direction.
+
+```python
+ranger = Multiranger(drone.scf)  # Initialize Multi-Ranger sensor
+```
+
+### 🔹 Get Distance from Each Sensor
+```python
+front_dist = ranger.front  # Distance to obstacle in front
+back_dist = ranger.back    # Distance to obstacle in back
+left_dist = ranger.left    # Distance to obstacle on the left
+right_dist = ranger.right  # Distance to obstacle on the right
+up_dist = ranger.up        # Distance to obstacle above
+```
+
+### 🔹 Example: Print All Sensor Readings
+```python
+print(f"Front: {ranger.front} m, Back: {ranger.back} m")
+print(f"Left: {ranger.left} m, Right: {ranger.right} m")
+print(f"Up: {ranger.up} m")
+```
+
+---
+
+## 🏎️ Autonomous Obstacle Avoidance
+You can use **`if` statements** to make the drone react to obstacles.
+
+### 🔹 Example: Stop if an Obstacle is Too Close
+```python
+if ranger.front < 0.3:
+    print("Obstacle ahead! Stopping.")
+    mc.stop()
+```
+
+### 🔹 Example: Avoid Obstacles by Turning
+```python
+if ranger.front < 0.3:
+    print("Obstacle detected! Turning left.")
+    mc.turn_left(45)  # Turn 45 degrees left
+```
+
+### 🔹 Example: Move Back if Blocked in Front
+```python
+if ranger.front < 0.3 and ranger.back > 0.5:
+    print("Obstacle ahead! Moving back.")
+    mc.back(0.3)
+```
+
+---
+
+## 🔄 Multi-Ranger Conditional Loops
+You can use **while loops** to continuously check sensor data and adjust movements.
+
+### 🔹 Example: Fly Until an Obstacle is Detected
+```python
+while ranger.front > 0.5:
+    mc.forward(0.1)  # Move forward 10 cm
+    time.sleep(0.1)
+
+print("Obstacle detected! Stopping.")
+mc.stop()
+```
+
+### 🔹 Example: Follow a Wall (Keep a Fixed Distance)
+```python
+while True:
+    if ranger.right > 0.4:  # If too far from the wall, move right
+        mc.right(0.1)
+    elif ranger.right < 0.3:  # If too close, move left
+        mc.left(0.1)
+
+    time.sleep(0.1)
+```
+
+### 🔹 Example: Hover and Avoid Obstacles Automatically
+```python
+while True:
+    if ranger.front < 0.3:
+        mc.turn_left(45)  # Turn left if an obstacle is ahead
+    elif ranger.left < 0.3:
+        mc.turn_right(45)  # Turn right if too close to the left
+    else:
+        mc.forward(0.1)  # Otherwise, keep moving forward
+
+    time.sleep(0.1)
+```
+
+---
+
+## 🏁 Full Example: Smart Obstacle Avoidance with Multi-Ranger
+```python
+from crazyflie_controller import CrazyflieController
+from cflib.swarms.multiranger import Multiranger
+import time
+
+drone = CrazyflieController()
+ranger = Multiranger(drone.scf)  # Initialize Multi-Ranger sensors
+
+try:
+    drone.mc.take_off(0.5)  # Takeoff to 0.5m
+
+    while True:
+        # If an obstacle is detected in front, turn left
+        if ranger.front < 0.3:
+            print("Obstacle ahead! Turning left.")
+            drone.mc.turn_left(45)
+        # If there's space, move forward
+        elif ranger.front > 0.5:
+            drone.mc.forward(0.1)
+        
+        # If it's too close to the left, turn right
+        if ranger.left < 0.3:
+            drone.mc.turn_right(45)
+
+        time.sleep(0.1)
+
+except KeyboardInterrupt:
+    print("Emergency stop activated!")
+
+drone.mc.land()  # Land safely
+drone.close()
+```
+
+---
+
+## 📜 Summary of Multi-Ranger Commands & Conditionals
+
+| Command | Description |
+|---------|------------|
+| `ranger.front` | Distance to the front obstacle (meters) |
+| `ranger.back` | Distance to the back obstacle |
+| `ranger.left` | Distance to the left obstacle |
+| `ranger.right` | Distance to the right obstacle |
+| `ranger.up` | Distance to an obstacle above |
+| `if ranger.front < X:` | Check if an object is closer than X meters |
+| `while ranger.front > X:` | Keep moving until an obstacle is closer than X meters |
+| `mc.turn_left(45)` | Turn left if an obstacle is detected |
+| `mc.forward(0.1)` | Move forward only if space is clear |
+| `mc.stop()` | Stop all motion when an obstacle is detected |
+
+---
+
+## 🚀 Next Steps
+- **Test these scripts** to see how the drone reacts to obstacles.
+- **Modify distance thresholds** (`0.3m`, `0.5m`, etc.) to fine-tune obstacle avoidance.
+- **Combine with Flow Deck** for even better autonomous navigation.
+
+Now, you can use the **Multi-Ranger Deck to avoid obstacles and navigate autonomously!** 🚀
+
 
