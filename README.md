@@ -101,61 +101,101 @@ mc.spiral_left(0.5, 0.1, 0.3, 180)   # Spiral inward left (180°)
 
 ---
 
-## 🚀 Advanced Position Control
+## 🚀 Crazyflie Flow Deck Commands & Conditional Statements
 
-If you are using absolute positioning, you can use:
+The Flow Deck is an optical flow and distance sensor that enables autonomous positioning for the Crazyflie drone. It allows the drone to hover, move precisely, and hold position without external tracking systems.
 
-```python
-mc.go_to(x, y, z, yaw, velocity)
-# x, y, z → Coordinates in meters
-# yaw → Final heading angle (degrees)
-# velocity → Speed of movement (m/s)
-```
-
-### Example:
+### 📌 Required Import for Flow Deck
 
 ```python
-mc.go_to(1.0, 1.0, 0.5, 90, 0.5)  # Move to (1,1,0.5) at 0.5 m/s, facing 90°
+from cflib.positioning.motion_commander import MotionCommander
 ```
 
----
+### 📡 Flow Deck Sensor Readings
 
-## 🛠️ Emergency Stop
-
+#### 🔹 Get Height (Z-axis distance)
 ```python
-mc.stop()  # Stops all motion immediately
+altitude = mc.get_height()
+print(f"Current altitude: {altitude} meters")
 ```
 
-⚠️ **This is useful if something goes wrong during flight.**
+#### 🔹 Get Optical Flow-Based Velocity
+```python
+velocity = mc.get_velocity()
+print(f"Velocity (X, Y, Z): {velocity}")
+```
 
----
+#### 🔹 Get Position Estimate
+```python
+position = mc.get_position()
+print(f"Estimated position (X, Y, Z): {position}")
+```
 
-## ✈️ Example: Full Flight Script
+### 🛫 Takeoff & Landing with Flow Deck
+```python
+mc.take_off(0.5)  # Takeoff to 0.5 meters using Flow Deck
+mc.land()  # Land safely using Flow Deck
+```
 
+### 📍 Position Control (Using Flow Deck)
+```python
+mc.move_distance(x=0.5, y=0.0, z=0.0)  # Move forward 0.5 meters
+mc.move_distance(x=0.0, y=0.5, z=0.0)  # Move right 0.5 meters
+mc.move_distance(x=0.0, y=0.0, z=0.3)  # Move up 0.3 meters
+```
+
+### 🔄 Flow Deck-Based Conditional Statements
+
+#### 🔹 Example: Stop Moving if Height is Too Low
+```python
+altitude = mc.get_height()
+if altitude < 0.2:
+    print("Warning: Too low! Stopping movement.")
+    mc.stop()
+```
+
+#### 🔹 Example: Hover Until a Certain Height is Reached
+```python
+while mc.get_height() < 0.5:
+    print("Ascending...")
+    mc.up(0.1)
+    time.sleep(0.1)
+
+print("Reached target altitude!")
+```
+
+#### 🔹 Example: Move Only if Altitude is Safe
+```python
+if mc.get_height() > 0.3:
+    mc.move_distance(0.5, 0, 0)  # Move forward 0.5m
+else:
+    print("Altitude too low, not moving!")
+```
+
+### 🏁 Full Example: Smart Movement with Flow Deck
 ```python
 from crazyflie_controller import CrazyflieController
+import time
 
 drone = CrazyflieController()
 
-commands = [
-    (drone.mc.take_off, 0.5),      # Takeoff to 0.5m
-    (drone.mc.forward, 0.3),       # Move forward
-    (drone.mc.turn_right, 90),     # Turn right
-    (drone.mc.right, 0.3),         # Move right
-    (drone.mc.up, 0.3),            # Move up
-    (drone.mc.circle_left, (1.0, 0.5)),  # Circle left
-    (drone.mc.land, None),         # Land the drone
-]
-
 try:
-    drone.execute_commands(commands)
+    drone.mc.take_off(0.5)  # Takeoff to 0.5m
+
+    if drone.mc.get_height() > 0.3:
+        drone.mc.move_distance(0.5, 0, 0)
+        drone.mc.move_distance(0, 0.5, 0)
+    else:
+        print("Altitude too low! Adjusting height...")
+        drone.mc.up(0.2)
+
+    drone.mc.land()
+
 except KeyboardInterrupt:
-    print("Shutting down.")
+    print("Emergency stop activated!")
 
 drone.close()
 ```
 
----
-
-🚀 **Enjoy flying with Crazyflie!**
+🚀 **Now, you can use Flow Deck-powered movements and logic for safe and accurate Crazyflie flights!**
 
