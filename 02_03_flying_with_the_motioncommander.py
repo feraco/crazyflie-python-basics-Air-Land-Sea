@@ -1,48 +1,37 @@
-import logging
 import time
+from crazyflie_controller import CrazyflieController  # Import reusable controller
 
-import cflib.crtp
-from cflib.crazyflie import Crazyflie
-from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
-from cflib.positioning.motion_commander import MotionCommander
-from cflib.utils import uri_helper
+# Initialize Crazyflie controller
+drone = CrazyflieController()
 
-# Set Uniform Resource Identifier and default height constant
-URI = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
-DEFAULT_HEIGHT = 0.3
+try:
+    drone.mc.take_off(0.5)  # Takeoff to 0.5 meters
+    time.sleep(0.5)
 
-# Only output errors from the logging framework
-logging.basicConfig(level=logging.ERROR)
-
-
-def move_linear_simple(scf):
-    """
-    Takeoff, fly forward, back, left, right, up and down before landing.
+    # Movement sequence
+    drone.mc.forward(0.3)
+    time.sleep(0.5)
     
-    Has a 0.5 second delay between each movement.
-    """
-    with MotionCommander(scf, default_height=DEFAULT_HEIGHT) as mc:
-        time.sleep(0.5)
-        print("moving forward")
-        mc.forward(0.3)
-        time.sleep(0.5)
-        print("moving back") 
-        mc.back(0.3)
-        time.sleep(0.5)
-        mc.turn_left(90)
-        mc.turn_right(180)
-        time.sleep(0.5)
-        mc.right(0.3)
-        time.sleep(0.5)
-        mc.up(0.3)
-        time.sleep(0.5)
-        print("getting tired time to land")
-        mc.down(0.3)
-        time.sleep(0.5)
+    drone.mc.back(0.3)
+    time.sleep(0.5)
+    
+    drone.mc.turn_left(90)
+    drone.mc.turn_right(180)
+    time.sleep(0.5)
+    
+    drone.mc.right(0.3)
+    time.sleep(0.5)
+    
+    drone.mc.up(0.3)
+    time.sleep(0.5)
 
-if __name__ == '__main__':
-    cflib.crtp.init_drivers()
+    print("Getting tired... time to land.")
+    drone.mc.down(0.3)
+    time.sleep(0.5)
 
-    with SyncCrazyflie(URI, cf=Crazyflie(rw_cache='./cache')) as scf:
-        # Run flight function
-        move_linear_simple(scf)
+    drone.mc.land()  # Land safely
+
+except KeyboardInterrupt:
+    print("Emergency stop activated!")
+
+drone.close()
