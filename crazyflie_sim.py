@@ -28,6 +28,7 @@ class CrazyflieSimulator():
         self.bearing = 0
         self.altitude_data = []
         self.path_coors = [(0, 0)]
+        self.yaw_data = []
         self.command_log = []
 
     def send_command(self, command: str, *args):
@@ -70,9 +71,10 @@ class CrazyflieSimulator():
         self._check_takeoff()
         print(f"Moving: vx={vx}, vy={vy}, vz={vz}, yaw={yaw_rate}")
         self.send_command('move', vx, vy, vz, yaw_rate)
-        self.update_position(vx, vy, vz, duration)
+        self.update_position(vx, vy, vz, yaw_rate, duration)
+        self.plot_flight_path()
 
-    def update_position(self, vx, vy, vz, duration):
+    def update_position(self, vx, vy, vz, yaw_rate, duration):
         """Simulate movement in the environment."""
         new_x = self.cur_loc[0] + vx * duration
         new_y = self.cur_loc[1] + vy * duration
@@ -80,49 +82,72 @@ class CrazyflieSimulator():
         self.path_coors.append(self.cur_loc)
         self.altitude += vz * duration
         self.altitude_data.append(self.altitude)
+        self.bearing = (self.bearing + yaw_rate * duration) % 360
+        self.yaw_data.append(self.bearing)
 
-    ## Tello-Like Movement Functions
+    ## Movement Functions (Auto-Plots After Each Move)
     def forward(self, distance, speed=0.2):
         self.move(speed, 0, 0, 0, distance / speed)
+        self.plot_flight_path()
 
     def backward(self, distance, speed=0.2):
         self.move(-speed, 0, 0, 0, distance / speed)
+        self.plot_flight_path()
 
     def left(self, distance, speed=0.2):
         self.move(0, -speed, 0, 0, distance / speed)
+        self.plot_flight_path()
 
     def right(self, distance, speed=0.2):
         self.move(0, speed, 0, 0, distance / speed)
+        self.plot_flight_path()
 
     def up(self, distance, speed=0.1):
         self.move(0, 0, speed, 0, distance / speed)
+        self.plot_altitude()
 
     def down(self, distance, speed=0.1):
         self.move(0, 0, -speed, 0, distance / speed)
+        self.plot_altitude()
 
     def rotate(self, yaw_rate, duration=1.0):
         self._check_takeoff()
         print(f"Rotating: yaw_rate={yaw_rate}")
         self.send_command('rotate', yaw_rate)
         self.bearing = (self.bearing + yaw_rate * duration) % 360
+        self.yaw_data.append(self.bearing)
+        self.plot_yaw()
 
     def plot_flight_path(self):
+        """Plot updated flight path after each movement."""
         fig, ax = plt.subplots()
         horz_df = pd.DataFrame(self.path_coors)
         ax.plot(horz_df[0], horz_df[1], 'bo-', linewidth=2, markersize=8)
+        ax.scatter(horz_df.iloc[-1, 0], horz_df.iloc[-1, 1], c='red', marker='^', s=100, label='Drone')
         ax.grid()
-        ax.set(xlabel='X Distance (m)', ylabel='Y Distance (m)', title='Crazyflie Flight Path')
+        ax.set(xlabel='X Distance (m)', ylabel='Y Distance (m)', title='Cumulative Flight Path')
+        ax.legend()
         plt.show()
 
-    def deploy(self):
-        """Deploys the stored commands to the real Crazyflie."""
-        if not self.real_drone:
-            raise Exception("Simulator is not connected to a real Crazyflie!")
+    def plot_altitude(self):
+        """Plot altitude changes."""
+        plt.figure()
+        plt.plot(self.altitude_data, 'r-', marker='o')
+        plt.xlabel('Step')
+        plt.ylabel('Altitude (m)')
+        plt.title('Altitude Over Time')
+        plt.grid()
+        plt.show()
 
-        print("Deploying commands to real Crazyflie...")
-        for command in self.command_log:
-            print(f"Sending: {self.serialize_command(command)}")
-            time.sleep(1)  # Simulating real execution delay
+    def plot_yaw(self):
+        """Plot yaw (rotation) changes."""
+        plt.figure()
+        plt.plot(self.yaw_data, 'g-', marker='o')
+        plt.xlabel('Step')
+        plt.ylabel('Yaw (degrees)')
+        plt.title('Yaw Over Time')
+        plt.grid()
+        plt.show()
 
     def reset(self):
         """Reset simulator state."""
@@ -137,18 +162,6 @@ class CrazyflieSimulator():
     def load_commands(self, file_path):
         with open(file_path) as json_file:
             commands = json.load(json_file)
-
         self._init_state()
         for command in commands:
             getattr(self, command['command'])(*command['arguments'])
-
-# Example Usage:
-if __name__ == '__main__':
-    drone = CrazyflieSimulator()
-    drone.takeoff()
-    drone.forward(1.0)   # Move forward 1 meter
-    drone.rotate(90, 1.0)  # Rotate 90 degrees
-    drone.right(1.0)  # Move right 1 meter
-    drone.up(0.5)  # Ascend 0.5 meters
-    drone.down(0.5)  # Descend 0.5 meters
-    drone.land()
