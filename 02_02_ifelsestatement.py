@@ -1,6 +1,6 @@
 import time
 from crazyflie_controller import CrazyflieController
-from cflib.swarms.multiranger import Multiranger  # Import Multi-Ranger for obstacle detection
+from cflib.utils.multiranger import Multiranger
 
 # Initialize Crazyflie controller
 drone = CrazyflieController()
