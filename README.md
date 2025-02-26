@@ -362,4 +362,7 @@ drone.close()
 
 Now, you can use the **Multi-Ranger Deck to avoid obstacles and navigate autonomously!** 🚀
 
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/feraco/crazyflie-python-basics-Air-Land-Sea/eddde969dfd2d6609d52f06ae3bb470116bb97ef?urlpath=lab%2Ftree%2Fcrazyflie_demo.ipynb)
+
+
 
