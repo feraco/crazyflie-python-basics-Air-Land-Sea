@@ -80,6 +80,32 @@ class CrazyflieSimulator():
         self.altitude_data.append(self.altitude)
         self.bearing = (self.bearing + yaw_rate * duration) % 360
         self.yaw_data.append(self.bearing)
+        self.plot_flight_path()
+
+    def forward(self, distance, speed=0.2):
+        self.move(speed, 0, 0, 0, distance / speed)
+
+    def backward(self, distance, speed=0.2):
+        self.move(-speed, 0, 0, 0, distance / speed)
+
+    def left(self, distance, speed=0.2):
+        self.move(0, -speed, 0, 0, distance / speed)
+
+    def right(self, distance, speed=0.2):
+        self.move(0, speed, 0, 0, distance / speed)
+
+    def up(self, distance, speed=0.1):
+        self.move(0, 0, speed, 0, distance / speed)
+
+    def down(self, distance, speed=0.1):
+        self.move(0, 0, -speed, 0, distance / speed)
+
+    def rotate(self, yaw_rate, duration=1.0):
+        self._check_takeoff()
+        self.send_command('rotate', yaw_rate)
+        self.bearing = (self.bearing + yaw_rate * duration) % 360
+        self.yaw_data.append(self.bearing)
+        self.plot_flight_path()
 
     def plot_flight_path(self):
         fig = plt.figure()
