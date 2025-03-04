@@ -5,7 +5,7 @@ from cflib.crazyflie import Crazyflie
 from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
 from cflib.positioning.motion_commander import MotionCommander
 from cflib.utils import uri_helper
-from cflib.swarms.multiranger import Multiranger  # Import Multi-Ranger
+from cflib.utils.multiranger import Multiranger
 
 # Set URI and default height
 URI = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
