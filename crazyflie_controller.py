@@ -22,6 +22,7 @@ class CrazyflieController:
         self.scf.__enter__()  # Manually enter context
         self.mc = MotionCommander(self.scf, default_height=DEFAULT_HEIGHT)
         self.ranger = Multiranger(self.scf)  # Initialize Multi-Ranger sensors
+        self.ranger.start()  # Start sensor logging
 
     def execute_commands(self, commands, avoid_obstacles=False):
         """Run a list of movement commands, with optional obstacle avoidance."""
@@ -35,33 +36,37 @@ class CrazyflieController:
 
     def detect_obstacle(self, threshold=0.3):
         """Returns True if any obstacle is detected within the threshold distance."""
-        return (
-            self.ranger.front < threshold or
-            self.ranger.back < threshold or
-            self.ranger.left < threshold or
-            self.ranger.right < threshold or
-            self.ranger.up < threshold
+        return any(
+            distance is not None and distance < threshold 
+            for distance in [self.ranger.front, self.ranger.back, self.ranger.left, self.ranger.right, self.ranger.up]
         )
 
     def get_distances(self):
         """Returns the current Multi-Ranger sensor readings."""
         return {
-            "front": self.ranger.front,
-            "back": self.ranger.back,
-            "left": self.ranger.left,
-            "right": self.ranger.right,
-            "up": self.ranger.up
+            "front": self.ranger.front if self.ranger.front is not None else "No Data",
+            "back": self.ranger.back if self.ranger.back is not None else "No Data",
+            "left": self.ranger.left if self.ranger.left is not None else "No Data",
+            "right": self.ranger.right if self.ranger.right is not None else "No Data",
+            "up": self.ranger.up if self.ranger.up is not None else "No Data"
         }
 
     def take_off(self, duration=3):
         """Take off and hover for a specified duration."""
+        print("🚀 Taking off!")
+        self.mc.take_off(DEFAULT_HEIGHT)
         time.sleep(duration)
 
     def land(self):
         """Land the drone safely."""
-        self.mc.stop()
+        print("🛬 Landing...")
+        self.mc.land()
+        time.sleep(2)
 
     def close(self):
         """Close the connection properly."""
+        print("🔄 Closing connection...")
+        self.mc.stop()
+        self.ranger.stop()
         self.mc.__exit__(None, None, None)
         self.scf.__exit__(None, None, None)
