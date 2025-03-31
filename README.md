@@ -88,15 +88,19 @@ mc.circle_left(radius_m=0.5, velocity_m_s=0.3)   # Circle left with 0.5m radius
 ## 🌀 Spiral Motion
 
 ```python
-mc.spiral_right(radius_start_m, radius_end_m, velocity_m_s, angle_degrees)
-mc.spiral_left(radius_start_m, radius_end_m, velocity_m_s, angle_degrees)
+mc.spiral(duration=6, radius=0.3, turns=3, ascend=True)
+mc.spiral(duration=6, radius=0.3, turns=3, ascend=False)
 ```
 
 ### Example:
 
 ```python
-mc.spiral_right(0.2, 1.0, 0.5, 360)  # Spiral outward right (360°)
-mc.spiral_left(0.5, 0.1, 0.3, 180)   # Spiral inward left (180°)
+cf.spiral(5, 0.2, 2, True)
+# 👉 This will fly a tight spiral upward:
+# - 5 seconds duration
+# - 0.2 meter radius (tight circle)
+# - 2 full spiral turns
+# - True = ascending
 ```
 
 ---
