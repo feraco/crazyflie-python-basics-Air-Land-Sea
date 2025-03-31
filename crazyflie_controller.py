@@ -63,6 +63,27 @@ class CrazyflieController:
         self.mc.land()
         time.sleep(2)
 
+
+    def spiral(self, duration=6, radius=0.3, turns=2, ascend=True):
+        print("🌀 Executing spiral...")
+        start_time = time.time()
+        t = 0
+        dt = 0.1
+        omega = (2 * math.pi * turns) / duration
+        vz = (DEFAULT_HEIGHT if ascend else -DEFAULT_HEIGHT) / duration
+
+        while time.time() - start_time < duration:
+            angle = omega * t
+            vx = radius * math.cos(angle) * omega
+            vy = radius * math.sin(angle) * omega
+            self.mc.start_linear_motion(vx, vy, vz)
+            time.sleep(dt)
+            t += dt
+
+        self.mc.stop()
+
+
+
     def close(self):
         """Close the connection properly."""
         print("🔄 Closing connection...")
