@@ -341,6 +341,7 @@ class CrazyflieSimulator:
             )
         return False
 
+    
     def get_distances(self):
         if self.real_drone:
             return {
@@ -349,6 +350,15 @@ class CrazyflieSimulator:
                 "left": self.ranger.left if self.ranger.left is not None else "No Data",
                 "right": self.ranger.right if self.ranger.right is not None else "No Data",
                 "up": self.ranger.up if self.ranger.up is not None else "No Data"
+            }
+        else:
+            # Simulated obstacle values (can be randomized or tuned later)
+            return {
+                "front": 0.6,
+                "back": 1.0,
+                "left": 0.8,
+                "right": 1.2,
+                "up": 0.5
             }
         return {k: "Simulated" for k in ["front", "back", "left", "right", "up"]}
 
