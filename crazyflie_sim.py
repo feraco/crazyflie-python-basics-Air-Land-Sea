@@ -3,13 +3,17 @@ import time
 import math
 import pandas as pd
 import plotly.graph_objects as go
+
+# Crazyflie imports
 import cflib.crtp
 from cflib.crazyflie import Crazyflie
 from cflib.crazyflie.syncCrazyflie import SyncCrazyflie
 from cflib.positioning.motion_commander import MotionCommander
 from cflib.utils import uri_helper
 from cflib.utils.multiranger import Multiranger
+from cflib.crazyflie.log import LogConfig  # Required for zrange logging
 
+# Default URI and height
 URI = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
 DEFAULT_HEIGHT = 0.3
 
@@ -18,16 +22,24 @@ class CrazyflieSimulator:
         self.real_drone = real
         self.takeoff_alt = DEFAULT_HEIGHT
         self._init_state()
+        self.zrange = None  # For Flow Deck / Z-Ranger sensor
 
         if self.real_drone:
+            print("🔌 Connecting to real Crazyflie...")
             cflib.crtp.init_drivers()
             self.scf = SyncCrazyflie(URI, cf=Crazyflie(rw_cache='./cache'))
             self.scf.__enter__()
-            self.mc = MotionCommander(self.scf, default_height=DEFAULT_HEIGHT)
+
+            # Initialize motion and sensing tools
+            self.mc = MotionCommander(self.scf, default_height=self.takeoff_alt)
             self.ranger = Multiranger(self.scf)
             self.ranger.start()
-
+            
+            # Start logging z-range from sensor
+            self._init_zrange_logging()
+    
     def _init_state(self):
+        """Initialize simulator or state tracking for real drone."""
         self.takeoff_state = False
         self.altitude = 0
         self.cur_loc = (0, 0)
@@ -56,6 +68,31 @@ class CrazyflieSimulator:
         if not self.takeoff_state:
             raise Exception("🚫 Takeoff required before executing this command!")
 
+    def _init_zrange_logging(self):
+        from cflib.crazyflie.log import LogConfig
+
+        log_conf = LogConfig(name='Zrange', period_in_ms=100)
+        log_conf.add_variable('range.zrange', 'float')
+
+        def log_callback(timestamp, data, logconf):
+            self.zrange = data['range.zrange']
+
+        log_conf.data_received_cb.add_callback(log_callback)
+        self.scf.cf.log.add_config(log_conf)
+        log_conf.start()
+    def get_zrange(self):
+        """
+        Return the height from the Flow or Z-Ranger sensor.
+        Returns None if not available or not yet initialized.
+        """
+        if self.real_drone:
+            if self.zrange is not None:
+                return self.zrange
+            else:
+                print("⚠️ Z-range not yet initialized.")
+                return None
+        else:
+            return self.altitude  # Simulated mode uses current altitude
 
     def land(self, velocity=0.3):
         self._check_takeoff()
@@ -106,7 +143,8 @@ class CrazyflieSimulator:
 
     def down(self, distance, speed=0.1):
         self.move(0, 0, -speed, 0, distance / speed)
-
+        
+    
     def rotate(self, yaw_rate, duration=1.0):
         self._check_takeoff()
         self.send_command('rotate', yaw_rate, duration)
