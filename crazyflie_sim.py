@@ -48,6 +48,21 @@ class CrazyflieSimulator:
         self.path_coors = [(0, 0)]
         self.yaw_data = []
         self.command_log = []
+        
+    def set_raw_thrust(self, thrust_value, duration=1.0):
+        """
+        Manually set thrust value (bypassing MotionCommander).
+        
+        Args:
+            thrust_value (int): The raw thrust value to set (approx 10000 to 60000).
+            duration (float): How long (seconds) to apply thrust before stopping.
+        """
+        self._check_takeoff()
+        if self.real_drone:
+            self.scf.cf.commander.send_setpoint(0, 0, 0, thrust_value)
+            time.sleep(duration)
+            self.scf.cf.commander.send_stop_setpoint()
+        self.send_command('set_raw_thrust', thrust_value, duration)
 
     def takeoff(self, height=DEFAULT_HEIGHT, velocity=0.3):
         if not self.takeoff_state:
