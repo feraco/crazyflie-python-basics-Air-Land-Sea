@@ -67,6 +67,27 @@ class CrazyflieSimulator:
     def _check_takeoff(self):
         if not self.takeoff_state:
             raise Exception("🚫 Takeoff required before executing this command!")
+    def start_setpoint_stream(self):
+        """
+        Start sending zero setpoints to unlock motors (required before manual thrust).
+        """
+        if self.real_drone:
+            print("Starting setpoint stream...")
+            self.scf.cf.commander.send_setpoint(0, 0, 0, 0)
+            time.sleep(0.1)
+    def set_raw_thrust(self, thrust_value, duration=1.0):
+        """
+        Manually set thrust value (bypassing MotionCommander).
+        
+        Args:
+            thrust_value (int): The raw thrust value to set (approx 10000 to 60000).
+            duration (float): How long (seconds) to apply thrust before stopping.
+        """
+        if self.real_drone:
+            self.scf.cf.commander.send_setpoint(0, 0, 0, thrust_value)
+            time.sleep(duration)
+            self.scf.cf.commander.send_stop_setpoint()
+        self.send_command('set_raw_thrust', thrust_value, duration)
 
     def _init_zrange_logging(self):
         from cflib.crazyflie.log import LogConfig
