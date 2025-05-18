@@ -3,7 +3,7 @@
 This repository provides educational example files and control scripts for exploring drone flight and autonomy using the Crazyflie 2.1. It is part of the DroneBlocks InnovatED STEM Air, Land, and Sea course and supports both simulated and real drone interaction using Python and Jupyter Notebooks.
 
 ---
-
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/feraco/crazyflie-python-basics-Air-Land-Sea/HEAD?urlpath=%2Fdoc%2Ftree%2F00_crazyflie_sim_student_version_hs_.ipynb)
 ## Table of Contents
 
 * [Project Overview](#project-overview)
